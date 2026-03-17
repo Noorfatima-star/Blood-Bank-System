@@ -126,10 +126,14 @@
     <None Include="UI_Forms\.gitkeep" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="BloodRequest.cpp" />
+    <ClCompile Include="CompatibilityChecker.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Utilities\style.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BloodRequest.h" />
+    <ClInclude Include="CompatibilityChecker.h" />
     <ClInclude Include="Utilities\style.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -157,7 +157,7 @@ git clone https://github.com/YOUR_USERNAME/BloodBankSystem.git
 cd BloodBankSystem
 ```
 
-Open `BloodBankSystem.sln` in **Visual Studio 2019 or 2022**, set the platform to **x86**, and press **F5**.
+Open `BloodBankSystem.sln` in **Visual Studio 2019 or 2022**, set the platform to **x64**, and press **F5**.
 
 The `Database/` folder and all `.txt` files are created automatically on first run by `FileManager::InitialiseStorage()`.
 

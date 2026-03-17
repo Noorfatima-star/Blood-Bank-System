@@ -28,9 +28,21 @@
     <ClCompile Include="Utilities\style.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="BloodRequest.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CompatibilityChecker.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Utilities\style.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="BloodRequest.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CompatibilityChecker.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
