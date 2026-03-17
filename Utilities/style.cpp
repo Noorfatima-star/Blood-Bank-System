@@ -5,28 +5,10 @@
 // ============================================================
 #include <windows.h>
 #include "style.h"
-// ============================================================
-//  FONT DEFINITIONS  (declared extern in style.h)
-// ============================================================
-namespace AppFont
-{
-    Font^ Title = gcnew Font("Segoe UI", 26, FontStyle::Bold);
-    Font^ Heading1 = gcnew Font("Segoe UI", 18, FontStyle::Bold);
-    Font^ Heading2 = gcnew Font("Segoe UI", 14, FontStyle::Bold);
-    Font^ Subtitle = gcnew Font("Segoe UI", 12, FontStyle::Regular);
-    Font^ Body = gcnew Font("Segoe UI", 10, FontStyle::Regular);
-    Font^ BodyBold = gcnew Font("Segoe UI", 10, FontStyle::Bold);
-    Font^ Small = gcnew Font("Segoe UI", 8, FontStyle::Regular);
-    Font^ BtnPrimary = gcnew Font("Segoe UI", 11, FontStyle::Bold);
-    Font^ BtnSecond = gcnew Font("Segoe UI", 10, FontStyle::Regular);
-    Font^ InputFont = gcnew Font("Segoe UI", 10, FontStyle::Regular);
-    Font^ GridFont = gcnew Font("Segoe UI", 9, FontStyle::Regular);
-    Font^ GridHeader = gcnew Font("Segoe UI", 9, FontStyle::Bold);
-    Font^ Alert = gcnew Font("Segoe UI", 11, FontStyle::Bold);
-    Font^ Captcha = gcnew Font("Courier New", 16, FontStyle::Bold);
-}
 
-
+// ============================================================
+//  IMPLEMENTATIONS
+// ============================================================
 namespace AppStyle
 {
     // ---- Global theme state ----
@@ -73,7 +55,6 @@ namespace AppStyle
     {
         panel->BackColor = CurrentBg();
         panel->Padding = Padding(16);
-        // Simulate a card border with a 1px border via Paint if needed
     }
 
     void ApplyPanelSidebar(Panel^ panel)
@@ -93,19 +74,17 @@ namespace AppStyle
 
     void ApplyPanelAlert(Panel^ panel)
     {
-        // Emergency low-stock / critical alert banner (Zara's feature)
         panel->BackColor = AppTheme::EmergencyOrange;
         panel->ForeColor = Color::White;
         panel->Height = 40;
         panel->Dock = DockStyle::Top;
-        panel->Visible = false; // Only shown when stock is critical
+        panel->Visible = false;
     }
 
     // ============================================================
     //  BUTTONS
     // ============================================================
 
-    // Internal helper: shared base properties
     static void SetBtnBase(Button^ btn)
     {
         btn->FlatStyle = FlatStyle::Flat;
@@ -129,7 +108,7 @@ namespace AppStyle
     void ApplyBtnSecondary(Button^ btn)
     {
         SetBtnBase(btn);
-        btn->BackColor = Color::FromArgb(229, 231, 235);  // Gray-200
+        btn->BackColor = Color::FromArgb(229, 231, 235);
         btn->ForeColor = AppTheme::TextPrimary;
         btn->Font = AppFont::BtnSecond;
         btn->FlatAppearance->MouseOverBackColor = Color::FromArgb(209, 213, 219);
@@ -139,7 +118,7 @@ namespace AppStyle
     void ApplyBtnDanger(Button^ btn)
     {
         SetBtnBase(btn);
-        btn->BackColor = Color::FromArgb(127, 29, 29);    // Darker red -- delete/reject
+        btn->BackColor = Color::FromArgb(127, 29, 29);
         btn->ForeColor = Color::White;
         btn->Font = AppFont::BtnPrimary;
         btn->FlatAppearance->MouseOverBackColor = Color::FromArgb(153, 27, 27);
@@ -178,7 +157,6 @@ namespace AppStyle
 
     void ApplyBtnNav(Button^ btn)
     {
-        // Sidebar navigation button -- red background, white text
         btn->FlatStyle = FlatStyle::Flat;
         btn->Cursor = Cursors::Hand;
         btn->BackColor = AppTheme::PrimaryRed;
@@ -195,7 +173,6 @@ namespace AppStyle
 
     void ApplyBtnDarkToggle(Button^ btn)
     {
-        // The dark / light mode toggle button (Muhammad Ali calls this)
         SetBtnBase(btn);
         btn->BackColor = Color::FromArgb(55, 65, 81);
         btn->ForeColor = Color::White;
@@ -240,7 +217,6 @@ namespace AppStyle
 
     void ApplyLabelAlert(Label^ lbl)
     {
-        // Emergency alert label -- shown when stock is critically low
         lbl->Font = AppFont::Alert;
         lbl->ForeColor = Color::White;
         lbl->BackColor = AppTheme::EmergencyOrange;
@@ -258,7 +234,6 @@ namespace AppStyle
 
     void ApplyLabelCaptcha(Label^ lbl)
     {
-        // The randomly generated 5-char CAPTCHA code (Esha's feature)
         lbl->Font = AppFont::Captcha;
         lbl->ForeColor = AppTheme::PrimaryRed;
         lbl->BackColor = AppTheme::PrimaryRedLight;
@@ -316,16 +291,12 @@ namespace AppStyle
 
     void ApplyProgressBarStock(ProgressBar^ pb, int percent)
     {
-        // Zara's inventory screen: colour changes with fill level
         pb->Minimum = 0;
         pb->Maximum = 100;
         pb->Value = Math::Min(percent, 100);
         pb->Height = 22;
-
-        // WinForms ProgressBar colour is tricky -- set Style to Continuous
         pb->Style = ProgressBarStyle::Continuous;
 
-        // Colour via P/Invoke SendMessage trick (standard WinForms approach)
         int color;
         if (percent >= 50)
             color = ColorTranslator::ToWin32(AppTheme::StockHigh);
@@ -334,7 +305,6 @@ namespace AppStyle
         else
             color = ColorTranslator::ToWin32(AppTheme::StockLow);
 
-        // PBM_SETBARCOLOR = 0x0409
         SendMessage(
             static_cast<HWND>(pb->Handle.ToPointer()),
             0x0409, 0,
@@ -344,7 +314,6 @@ namespace AppStyle
 
     void ApplyProgressBarPwd(ProgressBar^ pb, int strength)
     {
-        // Esha's live password strength indicator (1=Weak 2=Fair 3=Good 4=Strong)
         pb->Minimum = 0;
         pb->Maximum = 4;
         pb->Value = Math::Min(Math::Max(strength, 0), 4);
@@ -368,7 +337,7 @@ namespace AppStyle
     }
 
     // ============================================================
-    //  DATA GRID VIEW  (Muhammad Ali's Donor List screen)
+    //  DATA GRID VIEW
     // ============================================================
 
     void ApplyDataGridView(DataGridView^ dgv)
@@ -386,7 +355,6 @@ namespace AppStyle
         dgv->AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode::Fill;
         dgv->MultiSelect = false;
 
-        // Column headers
         dgv->ColumnHeadersDefaultCellStyle->BackColor = AppTheme::PrimaryRed;
         dgv->ColumnHeadersDefaultCellStyle->ForeColor = Color::White;
         dgv->ColumnHeadersDefaultCellStyle->Font = AppFont::GridHeader;
@@ -395,17 +363,14 @@ namespace AppStyle
         dgv->ColumnHeadersHeight = 36;
         dgv->ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode::DisableResizing;
 
-        // Row styles
         dgv->DefaultCellStyle->BackColor = CurrentBg();
         dgv->DefaultCellStyle->ForeColor = CurrentText();
         dgv->DefaultCellStyle->Padding = Padding(4, 6, 4, 6);
         dgv->RowTemplate->Height = 34;
 
-        // Alternating row colour
         dgv->AlternatingRowsDefaultCellStyle->BackColor =
             IsDarkMode ? Color::FromArgb(31, 41, 55) : Color::FromArgb(249, 250, 251);
 
-        // Selected row
         dgv->DefaultCellStyle->SelectionBackColor = AppTheme::PrimaryRedLight;
         dgv->DefaultCellStyle->SelectionForeColor = AppTheme::PrimaryRed;
 
@@ -418,7 +383,6 @@ namespace AppStyle
 
     void ApplyCaptchaBox(TextBox^ tb)
     {
-        // The user's CAPTCHA entry field (Esha)
         ApplyTextBox(tb);
         tb->Font = AppFont::BodyBold;
         tb->TextAlign = HorizontalAlignment::Center;
@@ -429,17 +393,13 @@ namespace AppStyle
 
     void ApplySearchBar(TextBox^ tb)
     {
-        // Search / filter bar (Muhammad Ali's Donor List)
         ApplyTextBox(tb);
         tb->Font = AppFont::InputFont;
         tb->BackColor = IsDarkMode ? AppTheme::DarkBgInput : Color::FromArgb(243, 244, 246);
-        // Placeholder hint text must be set separately via ctrl->PlaceholderText in .NET 5+
-        // or via SendMessage WM_SETCUEBANNER for .NET Framework WinForms
     }
 
     void ApplyDivider(Label^ lbl)
     {
-        // Horizontal rule / separator
         lbl->AutoSize = false;
         lbl->Height = 1;
         lbl->BackColor = AppTheme::BorderLight;
@@ -449,23 +409,20 @@ namespace AppStyle
 
     // ============================================================
     //  WHOLE-FORM THEME TOGGLE
-    //  Muhammad Ali calls:  AppStyle::ApplyThemeToForm(this, true/false);
     // ============================================================
 
     void ApplyThemeToPanel(Panel^ panel, bool darkMode)
     {
-        // Skip sidebar and header panels (always red)
         Color bg = darkMode ? AppTheme::DarkBgCard : AppTheme::BgCard;
         Color text = darkMode ? AppTheme::DarkTextPrimary : AppTheme::TextPrimary;
 
         panel->BackColor = bg;
         panel->ForeColor = text;
 
-        for each(Control ^ ctrl in panel->Controls)
+        for each (Control ^ ctrl in panel->Controls)
         {
             if (Label^ lbl = dynamic_cast<Label^>(ctrl))
             {
-                // Skip alert / captcha labels
                 if (lbl->BackColor != AppTheme::EmergencyOrange &&
                     lbl->BackColor != AppTheme::PrimaryRedLight)
                 {
@@ -501,11 +458,10 @@ namespace AppStyle
         form->BackColor = darkMode ? AppTheme::DarkBgPage : AppTheme::BgPage;
         form->ForeColor = darkMode ? AppTheme::DarkTextPrimary : AppTheme::TextPrimary;
 
-        for each(Control ^ ctrl in form->Controls)
+        for each (Control ^ ctrl in form->Controls)
         {
             if (Panel^ panel = dynamic_cast<Panel^>(ctrl))
             {
-                // Keep sidebar and header panels always red
                 if (panel->BackColor == AppTheme::PrimaryRed)
                     continue;
 
@@ -513,7 +469,6 @@ namespace AppStyle
             }
             else if (Button^ btn = dynamic_cast<Button^>(ctrl))
             {
-                // Only restyle secondary / neutral buttons; keep red primary unchanged
                 if (btn->BackColor != AppTheme::PrimaryRed &&
                     btn->BackColor != AppTheme::AccentGreen &&
                     btn->BackColor != AppTheme::AccentBlue)
