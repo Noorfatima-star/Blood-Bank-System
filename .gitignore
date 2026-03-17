@@ -3,7 +3,6 @@
 *.user
 *.userosscache
 *.sln.docstates
-*.vcxproj.filters
 *.vc.db
 *.vc.opendb
 .vs/
