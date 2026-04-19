@@ -126,6 +126,8 @@
     <None Include="UI_Forms\.gitkeep" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="BloodRequest.cpp" />
+    <ClCompile Include="CompatibilityChecker.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Models\User.cpp" />
     <ClCompile Include="Utilities\FileManager.cpp" />
