@@ -14,6 +14,11 @@ namespace AppStyle
     // ---- Global theme state ----
     bool IsDarkMode = false;
 
+    // ---- Internal helper colors for special button detection ----
+    static Color DangerRed = Color::FromArgb(127, 29, 29);
+    static Color WarningOrange = Color::FromArgb(234, 88, 12); // emergency orange
+    static Color InfoBlue = Color::FromArgb(37, 99, 235);
+
     // ============================================================
     //  HELPER  (internal)
     // ============================================================
@@ -118,7 +123,7 @@ namespace AppStyle
     void ApplyBtnDanger(Button^ btn)
     {
         SetBtnBase(btn);
-        btn->BackColor = Color::FromArgb(127, 29, 29);
+        btn->BackColor = DangerRed;
         btn->ForeColor = Color::White;
         btn->Font = AppFont::BtnPrimary;
         btn->FlatAppearance->MouseOverBackColor = Color::FromArgb(153, 27, 27);
@@ -177,10 +182,17 @@ namespace AppStyle
         btn->BackColor = Color::FromArgb(55, 65, 81);
         btn->ForeColor = Color::White;
         btn->Font = AppFont::Small;
-        btn->Text = IsDarkMode ? L"☀  Light Mode" : L"🌙  Dark Mode";
+        // Text will be set by the caller based on current IsDarkMode
         btn->Width = 120;
         btn->Height = 30;
         btn->FlatAppearance->MouseOverBackColor = Color::FromArgb(75, 85, 99);
+    }
+
+    // Helper to update dark toggle button text (call after toggling)
+    void UpdateDarkToggleText(Button^ btn)
+    {
+        if (btn != nullptr)
+            btn->Text = IsDarkMode ? L"☀  Light Mode" : L"🌙  Dark Mode";
     }
 
     // ============================================================
@@ -408,11 +420,18 @@ namespace AppStyle
     }
 
     // ============================================================
-    //  WHOLE-FORM THEME TOGGLE
+    //  WHOLE-FORM THEME TOGGLE (FIXED VERSIONS)
     // ============================================================
 
     void ApplyThemeToPanel(Panel^ panel, bool darkMode)
     {
+        // Skip panels that are intentionally red (sidebar, header, etc.)
+        if (panel->BackColor == AppTheme::PrimaryRed ||
+            panel->BackColor == DangerRed ||
+            panel->BackColor == WarningOrange ||
+            panel->BackColor == InfoBlue)
+            return;
+
         Color bg = darkMode ? AppTheme::DarkBgCard : AppTheme::BgCard;
         Color text = darkMode ? AppTheme::DarkTextPrimary : AppTheme::TextPrimary;
 
@@ -446,6 +465,7 @@ namespace AppStyle
             }
             else if (DataGridView^ dgv = dynamic_cast<DataGridView^>(ctrl))
             {
+                // Refresh DataGridView styles (they depend on IsDarkMode)
                 AppStyle::ApplyDataGridView(dgv);
             }
         }
@@ -462,16 +482,20 @@ namespace AppStyle
         {
             if (Panel^ panel = dynamic_cast<Panel^>(ctrl))
             {
-                if (panel->BackColor == AppTheme::PrimaryRed)
-                    continue;
-
                 ApplyThemeToPanel(panel, darkMode);
             }
             else if (Button^ btn = dynamic_cast<Button^>(ctrl))
             {
-                if (btn->BackColor != AppTheme::PrimaryRed &&
-                    btn->BackColor != AppTheme::AccentGreen &&
-                    btn->BackColor != AppTheme::AccentBlue)
+                // Preserve special button styles (Primary, Danger, Success, Info, Warning)
+                bool isSpecial =
+                    btn->BackColor == AppTheme::PrimaryRed ||
+                    btn->BackColor == DangerRed ||
+                    btn->BackColor == AppTheme::AccentGreen ||
+                    btn->BackColor == AppTheme::AccentBlue ||
+                    btn->BackColor == AppTheme::AccentGold ||
+                    btn->BackColor == WarningOrange;
+
+                if (!isSpecial)
                 {
                     ApplyBtnSecondary(btn);
                 }

@@ -127,9 +127,13 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Models\User.cpp" />
+    <ClCompile Include="Utilities\FileManager.cpp" />
     <ClCompile Include="Utilities\style.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Models\User.h" />
+    <ClInclude Include="Utilities\FileManager.h" />
     <ClInclude Include="Utilities\style.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
