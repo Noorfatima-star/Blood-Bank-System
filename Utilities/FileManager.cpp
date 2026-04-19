@@ -1,19 +1,20 @@
 // ============================================================
-// FileManager.cpp  -  file I/O implementation (FINAL VERSION)
-// Author : Esha Qaisar | Roll: 25L-2009
+// FileManager.cpp  -  FINAL CLEAN VERSION
 // ============================================================
+
+#define _CRT_SECURE_NO_WARNINGS
 
 #include "FileManager.h"
 #include <fstream>
 #include <cstring>
 #include <cstdlib>
 #include <ctime>
-#include <direct.h>       // for _mkdir
-#include <windows.h>      // for GetModuleFileNameA
-#include <string>         // for std::string
+#include <direct.h>
+#include <windows.h>
+#include <string>
 
 // ============================================================
-// Static member definitions (non-const, will be set at runtime)
+// Static member definitions
 // ============================================================
 const char* FileManager::USERS_FILE = nullptr;
 const char* FileManager::LOGS_FILE = nullptr;
@@ -23,34 +24,33 @@ const char* FileManager::PATIENTS_FILE = nullptr;
 const char* FileManager::REQUESTS_FILE = nullptr;
 
 // ============================================================
-// Helper: build absolute path inside "Database" folder
+// Helper: Get EXE directory + Database path
 // ============================================================
-static std::string GetDatabasePath(const char* relativeFileName)
+static std::string GetDatabasePath(const char* fileName)
 {
     static char exeDir[MAX_PATH] = { 0 };
-    static bool init = false;
+    static bool initialized = false;
 
-    if (!init)
+    if (!initialized)
     {
         GetModuleFileNameA(NULL, exeDir, MAX_PATH);
         char* lastSlash = strrchr(exeDir, '\\');
         if (lastSlash) *lastSlash = '\0';
-        init = true;
+        initialized = true;
     }
 
-    std::string fullPath = std::string(exeDir) + "\\Database\\" + relativeFileName;
-    return fullPath;
+    return std::string(exeDir) + "\\Database\\" + fileName;
 }
 
 // ============================================================
-// Initialise static file paths (call once)
+// FIXED: Now inside class scope (important)
 // ============================================================
-static void InitFilePaths()
+void FileManager::InitialiseStorage()
 {
     static bool pathsInit = false;
+
     if (!pathsInit)
     {
-        // Store strings in static buffers to keep them alive
         static std::string usersPath, logsPath, donorsPath, inventoryPath;
         static std::string patientsPath, requestsPath;
 
@@ -61,80 +61,32 @@ static void InitFilePaths()
         patientsPath = GetDatabasePath("patients.txt");
         requestsPath = GetDatabasePath("requests.txt");
 
-        // Assign to the static pointers (non-const)
-        FileManager::USERS_FILE = usersPath.c_str();
-        FileManager::LOGS_FILE = logsPath.c_str();
-        FileManager::DONORS_FILE = donorsPath.c_str();
-        FileManager::INVENTORY_FILE = inventoryPath.c_str();
-        FileManager::PATIENTS_FILE = patientsPath.c_str();
-        FileManager::REQUESTS_FILE = requestsPath.c_str();
+        USERS_FILE = usersPath.c_str();
+        LOGS_FILE = logsPath.c_str();
+        DONORS_FILE = donorsPath.c_str();
+        INVENTORY_FILE = inventoryPath.c_str();
+        PATIENTS_FILE = patientsPath.c_str();
+        REQUESTS_FILE = requestsPath.c_str();
 
         pathsInit = true;
     }
-}
 
-// ============================================================
-// countLines (private)
-// ============================================================
-int FileManager::countLines(const char* filename)
-{
-    std::ifstream file(filename);
-    if (!file.is_open()) return 0;
-
-    int count = 0;
-    char line[512];
-    while (file.getline(line, 512))
-    {
-        if (strlen(line) > 0)
-            count++;
-    }
-    return count;
-}
-
-// ============================================================
-// parseLine (private) – expects 8 fields separated by '|'
-// ============================================================
-User FileManager::parseLine(const char* line)
-{
-    int len = static_cast<int>(strlen(line));
-    char* copy = new char[len + 1];
-    strcpy(copy, line);
-
-    const char* fields[8] = { "", "", "", "", "0", "", "", "" };
-    char* token = strtok(copy, "|");
-    int i = 0;
-    while (token != nullptr && i < 8)
-    {
-        fields[i++] = token;
-        token = strtok(nullptr, "|");
-    }
-
-    int age = atoi(fields[4]);
-    User u(fields[0], fields[1], fields[2], fields[3],
-        age, fields[5], fields[6], fields[7]);
-
-    delete[] copy;
-    return u;
-}
-
-// ============================================================
-// InitialiseStorage – creates Database folder and all needed files
-// ============================================================
-void FileManager::InitialiseStorage()
-{
-    InitFilePaths();
-
-    // Create the Database folder (if not exists)
+    // Create Database folder
     char dbFolder[MAX_PATH];
     strcpy(dbFolder, GetDatabasePath("").c_str());
+
     char* lastSlash = strrchr(dbFolder, '\\');
     if (lastSlash) *lastSlash = '\0';
-    _mkdir(dbFolder);
 
-    // Array of all required files
+    if (_mkdir(dbFolder) != 0)
+    {
+        // optional: check if already exists
+        // ignore error safely
+    }
+
     const char* files[] = {
-        USERS_FILE, LOGS_FILE, DONORS_FILE, INVENTORY_FILE,
-        PATIENTS_FILE, REQUESTS_FILE
+        USERS_FILE, LOGS_FILE, DONORS_FILE,
+        INVENTORY_FILE, PATIENTS_FILE, REQUESTS_FILE
     };
 
     for (int i = 0; i < 6; i++)
@@ -153,7 +105,55 @@ void FileManager::InitialiseStorage()
         }
     }
 
-    LogTransaction("SYSTEM", "Application started - storage ready.");
+    LogTransaction("SYSTEM", "Storage initialized successfully.");
+}
+
+// ============================================================
+// countLines
+// ============================================================
+int FileManager::countLines(const char* filename)
+{
+    std::ifstream file(filename);
+    if (!file.is_open()) return 0;
+
+    int count = 0;
+    char line[512];
+
+    while (file.getline(line, 512))
+    {
+        if (strlen(line) > 0)
+            count++;
+    }
+
+    return count;
+}
+
+// ============================================================
+// parseLine
+// ============================================================
+User FileManager::parseLine(const char* line)
+{
+    char* copy = _strdup(line);
+
+    const char* fields[8] = { "", "", "", "", "0", "", "", "" };
+
+    char* context = nullptr;
+    char* token = strtok_s(copy, "|", &context);
+
+    int i = 0;
+    while (token && i < 8)
+    {
+        fields[i++] = token;
+        token = strtok_s(nullptr, "|", &context);
+    }
+
+    int age = atoi(fields[4]);
+
+    User u(fields[0], fields[1], fields[2], fields[3],
+        age, fields[5], fields[6], fields[7]);
+
+    free(copy);
+    return u;
 }
 
 // ============================================================
@@ -162,18 +162,20 @@ void FileManager::InitialiseStorage()
 bool FileManager::SaveUser(const User& u)
 {
     std::ofstream file(USERS_FILE, std::ios::app);
+
     if (!file.is_open())
     {
-        LogTransaction("SYSTEM", "ERROR: Cannot open users file for writing.");
+        LogTransaction("SYSTEM", "ERROR: Cannot open users file.");
         return false;
     }
 
     char line[512];
     u.serialize(line, 512);
+
     file << line << "\n";
     file.close();
 
-    LogTransaction(u.getUsername(), "Registered new account.");
+    LogTransaction(u.getUsername(), "New user registered.");
     return true;
 }
 
@@ -185,18 +187,19 @@ bool FileManager::UsernameExists(const char* username)
     int count = 0;
     User* arr = LoadAllUsers(count);
 
-    bool found = false;
+    if (!arr) return false;
+
     for (int i = 0; i < count; i++)
     {
-        if (strcmp((arr + i)->getUsername(), username) == 0)
+        if (strcmp(arr[i].getUsername(), username) == 0)
         {
-            found = true;
-            break;
+            FreeUsers(arr);
+            return true;
         }
     }
 
     FreeUsers(arr);
-    return found;
+    return false;
 }
 
 // ============================================================
@@ -208,6 +211,7 @@ User* FileManager::LoadAllUsers(int& count)
     if (count == 0) return nullptr;
 
     User* arr = new User[count];
+
     std::ifstream file(USERS_FILE);
     if (!file.is_open())
     {
@@ -217,15 +221,16 @@ User* FileManager::LoadAllUsers(int& count)
 
     char line[512];
     int index = 0;
+
     while (file.getline(line, 512) && index < count)
     {
         if (strlen(line) == 0) continue;
-        arr[index] = parseLine(line);
-        index++;
+        arr[index++] = parseLine(line);
     }
 
     file.close();
     count = index;
+
     return arr;
 }
 
@@ -237,17 +242,17 @@ const User* FileManager::FindUser(const char* username,
     const User* arr,
     int count)
 {
-    if (arr == nullptr || count <= 0) return nullptr;
+    if (!arr || count <= 0) return nullptr;
 
     for (int i = 0; i < count; i++)
     {
-        const User* current = arr + i;
-        if (strcmp(current->getUsername(), username) == 0 &&
-            strcmp(current->getPassword(), password) == 0)
+        if (strcmp(arr[i].getUsername(), username) == 0 &&
+            strcmp(arr[i].getPassword(), password) == 0)
         {
-            return current;
+            return &arr[i];
         }
     }
+
     return nullptr;
 }
 
@@ -260,24 +265,29 @@ bool FileManager::LogTransaction(const char* actor, const char* action)
     if (!file.is_open()) return false;
 
     time_t now = time(nullptr);
-    char* timeStr = ctime(&now);
-    if (timeStr[strlen(timeStr) - 1] == '\n')
-        timeStr[strlen(timeStr) - 1] = '\0';
+    char timeStr[100];
+    ctime_s(timeStr, sizeof(timeStr), &now);
 
-    file << "[" << timeStr << "]  " << actor << " >> " << action << "\n";
+    timeStr[strlen(timeStr) - 1] = '\0';
+
+    file << "[" << timeStr << "]  "
+        << actor << " >> "
+        << action << "\n";
+
     file.close();
     return true;
 }
 
 // ============================================================
-// ExportToCSV – exports users (all roles)
+// ExportToCSV (FIXED .c_str())
 // ============================================================
 bool FileManager::ExportToCSV(const char* filename)
 {
     std::ofstream out(filename);
     if (!out.is_open())
     {
-        LogTransaction("Admin", "CSV export failed: cannot open " + std::string(filename));
+        std::string msg = "CSV export failed: cannot open " + std::string(filename);
+        LogTransaction("Admin", msg.c_str());
         return false;
     }
 
@@ -285,76 +295,33 @@ bool FileManager::ExportToCSV(const char* filename)
 
     int count = 0;
     User* arr = LoadAllUsers(count);
-    if (arr == nullptr)
+
+    if (!arr)
     {
         out.close();
-        LogTransaction("Admin", "CSV export: no users found.");
+        LogTransaction("Admin", "No users found.");
         return false;
     }
 
     for (int i = 0; i < count; i++)
     {
-        const User* u = arr + i;
-        out << (u->getName() ? u->getName() : "") << ","
-            << (u->getUsername() ? u->getUsername() : "") << ","
-            << (u->getRole() ? u->getRole() : "") << ","
-            << u->getAge() << ","
-            << (u->getBloodGroup() ? u->getBloodGroup() : "") << ","
-            << (u->getCity() ? u->getCity() : "") << ","
-            << (u->getContact() ? u->getContact() : "") << "\n";
+        const User& u = arr[i];
+
+        out << (u.getName() ? u.getName() : "") << ","
+            << (u.getUsername() ? u.getUsername() : "") << ","
+            << (u.getRole() ? u.getRole() : "") << ","
+            << u.getAge() << ","
+            << (u.getBloodGroup() ? u.getBloodGroup() : "") << ","
+            << (u.getCity() ? u.getCity() : "") << ","
+            << (u.getContact() ? u.getContact() : "") << "\n";
     }
 
     FreeUsers(arr);
     out.close();
 
-    LogTransaction("Admin", "Exported user data to CSV: " + std::string(filename));
-    return true;
-}
+    std::string msg = "Exported users to CSV: " + std::string(filename);
+    LogTransaction("Admin", msg.c_str());
 
-// ============================================================
-// ExportDonorsToCSV – exports donors from donors.txt
-// ============================================================
-bool FileManager::ExportDonorsToCSV(const char* filename)
-{
-    std::ofstream out(filename);
-    if (!out.is_open())
-    {
-        LogTransaction("Admin", "Donor CSV export failed: cannot open " + std::string(filename));
-        return false;
-    }
-
-    // Format: Name,Blood Group,Age,City,Contact,Last Donation Date,Total Donations
-    out << "Name,Blood Group,Age,City,Contact,Last Donation Date,Total Donations\n";
-
-    // TODO: Read from DONORS_FILE (format defined by Muhammad Ali)
-    // For now, create a stub that writes a header only.
-    // Actual implementation will be completed when donor file format is finalised.
-
-    out.close();
-    LogTransaction("Admin", "Exported donor data to CSV: " + std::string(filename));
-    return true;
-}
-
-// ============================================================
-// ExportInventoryToCSV – exports blood inventory from inventory.txt
-// ============================================================
-bool FileManager::ExportInventoryToCSV(const char* filename)
-{
-    std::ofstream out(filename);
-    if (!out.is_open())
-    {
-        LogTransaction("Admin", "Inventory CSV export failed: cannot open " + std::string(filename));
-        return false;
-    }
-
-    // Format: Blood Group,Units Available,Expiry Date (oldest),Status
-    out << "Blood Group,Units Available,Expiry Date (oldest),Status\n";
-
-    // TODO: Read from INVENTORY_FILE (format defined by Zara Shah)
-    // Stub implementation for now.
-
-    out.close();
-    LogTransaction("Admin", "Exported inventory data to CSV: " + std::string(filename));
     return true;
 }
 

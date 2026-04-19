@@ -15,10 +15,9 @@ namespace AppStyle
     bool IsDarkMode = false;
 
     // ---- Internal helper colors for special button detection ----
-    static Color DangerRed = Color::FromArgb(127, 29, 29);
-    static Color WarningOrange = Color::FromArgb(234, 88, 12); // emergency orange
-    static Color InfoBlue = Color::FromArgb(37, 99, 235);
-
+    Color GetDangerRed() { return Color::FromArgb(127, 29, 29); }
+    Color GetWarningOrange() { return Color::FromArgb(234, 88, 12); }
+    Color GetInfoBlue() { return Color::FromArgb(37, 99, 235); }
     // ============================================================
     //  HELPER  (internal)
     // ============================================================
@@ -123,7 +122,7 @@ namespace AppStyle
     void ApplyBtnDanger(Button^ btn)
     {
         SetBtnBase(btn);
-        btn->BackColor = DangerRed;
+        btn->BackColor = GetDangerRed();
         btn->ForeColor = Color::White;
         btn->Font = AppFont::BtnPrimary;
         btn->FlatAppearance->MouseOverBackColor = Color::FromArgb(153, 27, 27);
@@ -427,9 +426,9 @@ namespace AppStyle
     {
         // Skip panels that are intentionally red (sidebar, header, etc.)
         if (panel->BackColor == AppTheme::PrimaryRed ||
-            panel->BackColor == DangerRed ||
-            panel->BackColor == WarningOrange ||
-            panel->BackColor == InfoBlue)
+            panel->BackColor == GetDangerRed() ||
+            panel->BackColor == GetWarningOrange() ||
+            panel->BackColor == GetInfoBlue())
             return;
 
         Color bg = darkMode ? AppTheme::DarkBgCard : AppTheme::BgCard;
@@ -489,11 +488,11 @@ namespace AppStyle
                 // Preserve special button styles (Primary, Danger, Success, Info, Warning)
                 bool isSpecial =
                     btn->BackColor == AppTheme::PrimaryRed ||
-                    btn->BackColor == DangerRed ||
+                    btn->BackColor == GetDangerRed() ||
                     btn->BackColor == AppTheme::AccentGreen ||
                     btn->BackColor == AppTheme::AccentBlue ||
                     btn->BackColor == AppTheme::AccentGold ||
-                    btn->BackColor == WarningOrange;
+                    btn->BackColor == GetWarningOrange();
 
                 if (!isSpecial)
                 {
